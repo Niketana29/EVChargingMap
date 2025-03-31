@@ -1,41 +1,46 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const ExcelJS = require("exceljs");
+const xlsx = require("xlsx");
+const path = require("path");
+
 const app = express();
-
-const xlsx = require('xlsx');
-
 const PORT = process.env.PORT || 5000;
-
 
 app.use(cors());
 app.use(express.json());
 
-// Load EV stations from Excel
-app.get("/stations", async (req, res) => {
+// Load Charging Stations from Excel
+const loadChargingStations = () => {
     try {
-        const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.readFile("verified_ev_stations_v2.xlsx");
-        const worksheet = workbook.worksheets[0];
+        const filePath = path.join(__dirname, "verified_ev_stations_v2.xlsx");
+        const workbook = xlsx.readFile(filePath);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = xlsx.utils.sheet_to_json(sheet);
 
-        let stations = [];
-        worksheet.eachRow((row, rowNumber) => {
-            if (rowNumber !== 1) {
-                stations.push({
-                    name: row.getCell(1).value,
-                    latitude: row.getCell(2).value,
-                    longitude: row.getCell(3).value,
-                    chargingType: row.getCell(4).value,
-                });
-            }
-        });
-
-        res.json(stations);
+        // Convert lat & lng to float for Google Maps
+        return data.map(station => ({
+            name: station.Name,
+            latitude: parseFloat(station.Latitude),
+            longitude: parseFloat(station.Longitude),
+            chargingType: station["Charging Type"] || "Unknown",
+        }));
     } catch (error) {
-        res.status(500).json({ message: "Error reading file" });
+        console.error("Error reading Excel file:", error);
+        return [];
     }
+};
+
+// API Endpoint for Charging Stations
+app.get("/api/charging-stations", (req, res) => {
+    const stations = loadChargingStations();
+    res.json(stations);
 });
 
+// Root Route
+app.get("/", (req, res) => {
+    res.send("Backend is running successfully!");
+});
 
+// Start Server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

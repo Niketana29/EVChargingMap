@@ -4,6 +4,11 @@ const cors = require("cors");
 const ExcelJS = require("exceljs");
 const app = express();
 
+const xlsx = require('xlsx');
+
+const PORT = process.env.PORT || 5000;
+
+
 app.use(cors());
 app.use(express.json());
 
@@ -32,5 +37,5 @@ app.get("/stations", async (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

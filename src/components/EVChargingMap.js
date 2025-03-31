@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-function EVChargingMap() {
+const EVChargingMap = () => {
     const [stations, setStations] = useState([]);
+
+    useEffect(() => {
+        const loadStations = async () => {
+          const data = await fetchChargingStations();
+          setStations(data);
+        };
+        loadStations();
+      }, []);
 
     useEffect(() => {
         axios.get(process.env.REACT_APP_BACKEND_URL + "/stations")
@@ -12,14 +20,14 @@ function EVChargingMap() {
 
     return (
         <div>
-            <h1>EV Charging Stations</h1>
-            <ul>
-                {stations.map((station, index) => (
-                    <li key={index}>{station.name} ({station.latitude}, {station.longitude})</li>
-                ))}
-            </ul>
+          <h2>EV Charging Stations</h2>
+          <ul>
+            {stations.map((station, index) => (
+              <li key={index}>{station.name} - {station.location}</li>
+            ))}
+          </ul>
         </div>
-    );
+      );
 }
 
 export default EVChargingMap;
